@@ -10,3 +10,5 @@ streamlit
 ragas
 python-dotenv
 langgraph
+arxiv
+requests
