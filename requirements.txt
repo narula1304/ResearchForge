@@ -1,0 +1,12 @@
+anthropic
+pymupdf
+unstructured
+sentence-transformers
+rank_bm25
+chromadb
+fastapi
+uvicorn
+streamlit
+ragas
+python-dotenv
+langgraph
