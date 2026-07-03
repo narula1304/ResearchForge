@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+data/raw/*.pdf
+*.sqlite3
+.antigravity/
+chroma_db/
+*.log
