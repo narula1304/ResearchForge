@@ -3,28 +3,26 @@ import time
 import csv
 import os
 import requests
+import pandas as pd
 
 def main():
     queries = [
-        "retrieval augmented generation",
-        "reranking large language models",
-        "agentic AI reasoning",
-        "self-reflective RAG",
-        "tool use language models"
+        "function calling large language models agents",
+        "tool augmented LLM agents"
     ]
     
     max_results_per_query = 20
     output_dir = os.path.join("data", "raw")
     csv_file_path = os.path.join(output_dir, "paper_list.csv")
     
-    # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     
     downloaded_ids = set()
-    records = []
+    if os.path.exists(csv_file_path):
+        df_existing = pd.read_csv(csv_file_path)
+        downloaded_ids.update(df_existing['arxiv_id'].astype(str).tolist())
     
-    # Initialize arxiv Client
-    # We will still use explicit time.sleep to ensure 3-second delay between downloads
+    records = []
     client = arxiv.Client()
     
     for query in queries:
@@ -36,7 +34,6 @@ def main():
         )
         
         try:
-            # Fetch results
             results = list(client.results(search))
         except Exception as e:
             print(f"Error searching for '{query}': {e}")
@@ -50,9 +47,7 @@ def main():
                 continue
                 
             print(f"  [+] Downloading: {paper.title} ({arxiv_id})")
-            
             try:
-                # Download PDF
                 response = requests.get(paper.pdf_url, stream=True, timeout=30)
                 if response.status_code == 200:
                     pdf_path = os.path.join(output_dir, f"{arxiv_id}.pdf")
@@ -63,7 +58,6 @@ def main():
                     print(f"  [!] Failed to download {arxiv_id}, status code: {response.status_code}")
                     continue
                 
-                # Add to records
                 authors = ", ".join([author.name for author in paper.authors])
                 records.append({
                     "arxiv_id": arxiv_id,
@@ -73,28 +67,19 @@ def main():
                     "pdf_url": paper.pdf_url,
                     "search_query": query
                 })
-                
                 downloaded_ids.add(arxiv_id)
-                
-                # Delay between downloads to respect rate limits
                 time.sleep(3)
             except Exception as e:
                 print(f"  [!] Error downloading {arxiv_id}: {e}")
-                
-        # Delay between queries
         time.sleep(3)
 
-    # Write to CSV
-    print(f"\nWriting metadata to {csv_file_path}...")
-    with open(csv_file_path, mode='w', newline='', encoding='utf-8') as f:
-        fieldnames = ["arxiv_id", "title", "authors", "published_date", "pdf_url", "search_query"]
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        
-        writer.writeheader()
-        for record in records:
-            writer.writerow(record)
-            
-    print(f"\nDone! Downloaded {len(records)} unique papers.")
+    if records:
+        print(f"\nAppending metadata to {csv_file_path}...")
+        df_new = pd.DataFrame(records)
+        df_new.to_csv(csv_file_path, mode='a', header=not os.path.exists(csv_file_path), index=False)
+        print(f"\nDone! Downloaded {len(records)} unique papers.")
+    else:
+        print("\nNo new papers downloaded.")
 
 if __name__ == "__main__":
     main()

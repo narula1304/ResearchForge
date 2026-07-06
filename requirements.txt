@@ -12,3 +12,6 @@ python-dotenv
 langgraph
 arxiv
 requests
+pandas
+scikit-learn
+tqdm
